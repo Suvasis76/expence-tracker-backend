@@ -10,18 +10,17 @@ from .serializers import ExpenseSerializer
 from rest_framework import status, permissions
 from .serializers import RegisterSerializer
 
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+
+
 
 
 class ExpenseListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Supports:
-        - ?date=YYYY-MM-DD
-        - ?from=YYYY-MM-DD&to=YYYY-MM-DD
-        """
-
         date = request.GET.get("date")
         from_date = request.GET.get("from")
         to_date = request.GET.get("to")
@@ -38,12 +37,16 @@ class ExpenseListCreateView(APIView):
         expenses = expenses.order_by("-created_at")
 
         serializer = ExpenseSerializer(expenses, many=True)
-        total = sum(e.amount for e in expenses)
+
+        total = expenses.aggregate(
+            total=Coalesce(Sum("amount"), 0)
+        )["total"]
 
         return Response({
             "total": total,
             "expenses": serializer.data
         })
+
 
     def post(self, request):
         serializer = ExpenseSerializer(data=request.data)
