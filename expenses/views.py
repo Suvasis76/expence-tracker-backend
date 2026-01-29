@@ -77,7 +77,8 @@ class ExpenseDetailView(APIView):
             Expense, pk=pk, user=request.user
         )
         expense.delete()
-        return Response({"message": "Expense deleted"}, status=204)
+        return Response({"message": "Expense deleted"}, status=200)
+
     
 
 class RegisterView(APIView):
