@@ -31,6 +31,8 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
+# postgresql://expence_tracker_db_user:0IacTgGryagzelJVPzWJPG3V7acgvF4Z@dpg-d5tkplu3jp1c73eackv0-a/expence_tracker_db
+
 
 ALLOWED_HOSTS = ["*"]
 

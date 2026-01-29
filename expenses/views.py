@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404
 from .models import Expense
 from .serializers import ExpenseSerializer
 
+from rest_framework import status, permissions
+from .serializers import RegisterSerializer
+
+
 
 class ExpenseListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -71,3 +75,18 @@ class ExpenseDetailView(APIView):
         )
         expense.delete()
         return Response({"message": "Expense deleted"}, status=204)
+    
+
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "User registered successfully"},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
