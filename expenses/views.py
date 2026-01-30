@@ -12,6 +12,7 @@ from .serializers import RegisterSerializer
 
 from django.db.models import Sum, DecimalField
 from django.db.models.functions import Coalesce
+from datetime import datetime
 
 
 
@@ -28,13 +29,24 @@ class ExpenseListCreateView(APIView):
         expenses = Expense.objects.filter(user=request.user)
 
         if date:
-            expenses = expenses.filter(date=date)
+            try:
+                date = datetime.strptime(date, "%Y-%m-%d").date()
+                expenses = expenses.filter(date=date)
+            except ValueError:
+                return Response({"error": "Invalid date format"}, status=400)
+
         elif from_date and to_date:
-            expenses = expenses.filter(date__range=[from_date, to_date])
+            try:
+                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+                to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+                expenses = expenses.filter(date__range=(from_date, to_date))
+            except ValueError:
+                return Response({"error": "Invalid date range"}, status=400)
+
         else:
             expenses = expenses.filter(date=now().date())
 
-        expenses = expenses.order_by("-created_at")
+        expenses = expenses.order_by("-id")  # safer than created_at
 
         serializer = ExpenseSerializer(expenses, many=True)
 
