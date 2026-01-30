@@ -10,9 +10,9 @@ from .serializers import ExpenseSerializer
 from rest_framework import status, permissions
 from .serializers import RegisterSerializer
 
-from django.db.models import Sum
+from django.db.models import Sum, DecimalField
 from django.db.models.functions import Coalesce
-from decimal import Decimal
+
 
 
 
@@ -39,21 +39,25 @@ class ExpenseListCreateView(APIView):
         serializer = ExpenseSerializer(expenses, many=True)
 
         total = expenses.aggregate(
-            total=Coalesce(Sum("amount"), 0)
+            total=Coalesce(
+                Sum("amount"),
+                0,
+                output_field=DecimalField(max_digits=10, decimal_places=2)
+            )
         )["total"]
 
         return Response({
             "total": total,
             "expenses": serializer.data
         })
-
-
+    
     def post(self, request):
         serializer = ExpenseSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
 
 
 class ExpenseDetailView(APIView):
