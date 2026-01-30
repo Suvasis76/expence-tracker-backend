@@ -22,46 +22,10 @@ class ExpenseListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        date = request.GET.get("date")
-        from_date = request.GET.get("from")
-        to_date = request.GET.get("to")
-
         expenses = Expense.objects.filter(user=request.user)
-
-        if date:
-            try:
-                date = datetime.strptime(date, "%Y-%m-%d").date()
-                expenses = expenses.filter(date=date)
-            except ValueError:
-                return Response({"error": "Invalid date format"}, status=400)
-
-        elif from_date and to_date:
-            try:
-                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
-                to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
-                expenses = expenses.filter(date__range=(from_date, to_date))
-            except ValueError:
-                return Response({"error": "Invalid date range"}, status=400)
-
-        else:
-            expenses = expenses.filter(date=now().date())
-
-        expenses = expenses.order_by("-id")  # safer than created_at
-
         serializer = ExpenseSerializer(expenses, many=True)
+        return Response(serializer.data)
 
-        total = expenses.aggregate(
-            total=Coalesce(
-                Sum("amount"),
-                0,
-                output_field=DecimalField(max_digits=10, decimal_places=2)
-            )
-        )["total"]
-
-        return Response({
-            "total": total,
-            "expenses": serializer.data
-        })
     
     def post(self, request):
         serializer = ExpenseSerializer(data=request.data)
